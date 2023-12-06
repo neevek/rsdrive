@@ -46,7 +46,7 @@ async fn main() {
 fn api_router(app_state: AppState) -> Router<AppState> {
     Router::new()
         .route("/hello", get(|| async { "hello" }))
-        .route("/upload", get(file::upload_file))
+        .route("/upload", post(file::upload_file))
         .route_layer(
             ServiceBuilder::new()
                 // .layer(CookieManagerLayer::new())

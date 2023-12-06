@@ -47,7 +47,9 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             users: Arc::new(DashMap::new()),
-            assets_base_dir: std::env::home_dir().unwrap(),
+            assets_base_dir: homedir::get_my_home()
+                .unwrap_or(Some(PathBuf::from("./assets_base_dir")))
+                .unwrap(),
         }
     }
 
