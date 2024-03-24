@@ -18,15 +18,15 @@ pub enum TransferState {
 pub struct TransferTask {}
 
 impl TransferTask {
-    pub fn start(&self, socket: WebSocket, storage_ctx: Box<StorageContext>) {
-        tokio::spawn(async {
-            TransferTask::run(socket, storage_ctx).await.map_err(|e| {
+    pub fn start(&self, user_id: u32, socket: WebSocket, storage_ctx: Box<StorageContext>) {
+        tokio::spawn(async move {
+            TransferTask::run(user_id, socket, storage_ctx).await.map_err(|e| {
                 error!("{e}");
             })
         });
     }
 
-    async fn run(socket: WebSocket, storage_ctx: Box<StorageContext>) -> Result<()> {
+    async fn run(user_id: u32, socket: WebSocket, storage_ctx: Box<StorageContext>) -> Result<()> {
         let mut file_writer: Option<Box<dyn FileWriter>> = None;
         let mut file_info = SyncFileInfo::default();
 
@@ -53,7 +53,7 @@ impl TransferTask {
                         sync_size: 0,
                     };
 
-                    file_info = match storage_ctx.db.query_file_info(&trans_req.file_hash) {
+                    file_info = match storage_ctx.db.query_file_info(user_id, &trans_req.file_dir, &trans_req.file_name) {
                         Some(file_info) => {
                             debug!("transferring partial file:{file_info:?}");
                             trans_resp.sync_size = file_info.sync_size;
@@ -70,7 +70,7 @@ impl TransferTask {
                                 file_meta: "".to_string(),
                             };
 
-                            storage_ctx.db.save_file_info(&file_info)?;
+                            storage_ctx.db.save_file_info(user_id, &file_info)?;
                             file_info
                         }
                     };
@@ -83,7 +83,7 @@ impl TransferTask {
                         }
                     };
 
-                    Self::finalize_writer_if_needed(file_writer, &storage_ctx, &file_info)?;
+                    Self::finalize_writer_if_needed(user_id, file_writer, &storage_ctx, &file_info)?;
 
                     file_writer = Some(writer);
                     sender.send(TransferControlMessage::Response(trans_resp).into()).await.unwrap();
@@ -96,7 +96,7 @@ impl TransferTask {
                         // debug!("transferring, len:{}, {}/{}", data.len(), file_info.sync_size, file_info.file_size);
                         if file_info.sync_size >= file_info.file_size {
                             writer.close();
-                            storage_ctx.db.update_sync_size(&file_info)?;
+                            storage_ctx.db.update_sync_size(user_id, &file_info)?;
                             file_writer = None;
                             debug!("transfer completed, {}/{}", file_info.sync_size, file_info.file_size);
                             break;
@@ -123,13 +123,14 @@ impl TransferTask {
             }
         }
 
-        Self::finalize_writer_if_needed(file_writer, &storage_ctx, &file_info)?;
+        Self::finalize_writer_if_needed(user_id, file_writer, &storage_ctx, &file_info)?;
 
         debug!("transfer task ended!");
         Ok(())
     }
 
     fn finalize_writer_if_needed(
+        user_id: u32,
         writer: Option<Box<dyn FileWriter>>,
         storage_ctx: &StorageContext,
         file_info: &SyncFileInfo,
@@ -139,7 +140,7 @@ impl TransferTask {
         }
 
         if !file_info.file_hash.is_empty() {
-            storage_ctx.db.update_sync_size(file_info)?;
+            storage_ctx.db.update_sync_size(user_id, file_info)?;
         }
 
         Ok(())

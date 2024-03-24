@@ -1,4 +1,5 @@
 pub mod database;
+pub mod database_manager;
 pub mod file_storage;
 pub mod local_file_storage;
 pub mod sqlite_database;

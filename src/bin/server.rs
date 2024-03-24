@@ -37,25 +37,18 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     tracing::info!("Listening on {addr}");
 
-    axum::serve(
-        listener,
-        router.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .await
-    .unwrap();
+    axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
 }
 
 fn api_router(app_state: AppState) -> Router<AppState> {
     Router::new()
         .route("/hello", get(|| async { "hello" }))
-        .route("/upload", post(file::upload_file))
         .route("/ws", get(file::ws_handler))
         .route_layer(
             ServiceBuilder::new()
-                .layer(middleware::from_fn_with_state(
-                    app_state.clone(),
-                    auth::user_resolver,
-                ))
+                .layer(middleware::from_fn_with_state(app_state.clone(), auth::user_resolver))
                 .layer(middleware::map_request(request_interceptor))
                 .layer(middleware::map_response(response_interceptor)),
         )
@@ -65,11 +58,7 @@ fn static_router() -> Router {
     Router::new().nest_service("/", get_service(ServeDir::new("./")))
 }
 
-async fn request_interceptor<Body>(
-    uri: Uri,
-    method: Method,
-    request: Request<Body>,
-) -> Result<Request<Body>, StatusCode> {
+async fn request_interceptor<Body>(uri: Uri, method: Method, request: Request<Body>) -> Result<Request<Body>, StatusCode> {
     info!("--> {method} {uri}");
     Ok(request)
 }

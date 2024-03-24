@@ -1,5 +1,14 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct User {
+    pub id: u32,
+    pub username: String,
+    pub password: String,
+    pub phone_number: String,
+    pub email: String,
+    pub create_time: u32,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct UploadEntity {
