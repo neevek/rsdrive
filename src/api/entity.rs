@@ -1,7 +1,12 @@
+use crate::{
+    server::entity::User,
+    storage::{
+        database::Database,
+        database_manager::{DatabaseConfig, DatabaseManager},
+    },
+};
 use dashmap::DashMap;
 use std::{path::PathBuf, sync::Arc};
-
-use crate::server::entity::User;
 
 // #[derive(Clone, Debug)]
 // struct UserInner {
@@ -42,13 +47,18 @@ use crate::server::entity::User;
 #[derive(Clone, Debug)]
 pub struct AppState {
     users: Arc<DashMap<u32, User>>,
+    db_manager: DatabaseManager,
     assets_base_dir: PathBuf,
 }
 
 impl AppState {
     pub fn new() -> Self {
+        let db_config = DatabaseConfig {
+            uri: "./rsdrive.db".to_string(),
+        };
         Self {
             users: Arc::new(DashMap::new()),
+            db_manager: DatabaseManager::new(db_config),
             assets_base_dir: homedir::get_my_home().unwrap_or(Some(PathBuf::from("./assets_base_dir"))).unwrap(),
         }
     }
@@ -63,6 +73,10 @@ impl AppState {
 
     pub fn get_assets_base_dir(&self) -> &PathBuf {
         &self.assets_base_dir
+    }
+
+    pub fn get_database(&self) -> Box<dyn Database> {
+        self.db_manager.get_database().unwrap()
     }
 }
 

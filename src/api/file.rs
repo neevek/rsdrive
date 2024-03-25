@@ -33,7 +33,7 @@ pub async fn ws_handler(
 }
 
 async fn handle_socket2(user: User, state: State<AppState>, socket: WebSocket, addr: SocketAddr) {
-    debug!(">>>>>>>>> haha handle_socket2");
+    debug!(">>>>>>>>> haha handle_socket2: {user:?}");
     let task = TransferTask::default();
     let db = Box::new(SqliteDatabase::open("./test.db").unwrap());
     let mut base_dir = PathBuf::new();

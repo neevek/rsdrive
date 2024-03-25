@@ -1,12 +1,13 @@
-use std::path::PathBuf;
-
 use super::{database::Database, sqlite_database::SqliteDatabase};
 use anyhow::Result;
+use std::path::PathBuf;
 
+#[derive(Debug, Clone)]
 pub struct DatabaseConfig {
-    uri: String,
+    pub uri: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct DatabaseManager {
     config: DatabaseConfig,
 }

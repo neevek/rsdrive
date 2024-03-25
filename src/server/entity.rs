@@ -7,7 +7,7 @@ pub struct User {
     pub password: String,
     pub phone_number: String,
     pub email: String,
-    pub create_time: u32,
+    pub create_time: String,
 }
 
 #[derive(Serialize, Deserialize)]

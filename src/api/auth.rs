@@ -36,8 +36,12 @@ pub async fn login(mut state: State<AppState>, cookies: Cookies, login_info: Jso
         password: "password".to_string(),
         phone_number: "13800138000".to_string(),
         email: "test@gmail.com".to_string(),
-        create_time: 1234,
+        create_time: "haha".to_string(),
     };
+
+    let db = state.get_database();
+    db.save_user(&user).unwrap();
+    let user = db.query_user(&user.username, &user.password).unwrap();
 
     let mut cookie = Cookie::new(AUTH_TOKEN, user.id.to_string());
     cookie.set_http_only(true);

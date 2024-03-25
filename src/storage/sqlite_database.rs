@@ -93,6 +93,7 @@ impl Database for SqliteDatabase {
                     create_time: row.get(5)?,
                 })
             })
+            .map_err(|e| error!("{e}"))
             .ok()
     }
 
@@ -114,6 +115,7 @@ impl Database for SqliteDatabase {
                     file_size: row.get(5)?,
                 })
             })
+            .map_err(|e| error!("{e}"))
             .ok()
     }
 
@@ -145,13 +147,8 @@ impl Database for SqliteDatabase {
     fn delete_file_info(&self, user_id: u32, file_info: &SyncFileInfo) -> Result<bool> {
         let sql = "
             DELETE FROM user_file WHERE user_id = ? AND file_dir = ? AND file_name = ?";
-
-        let sql = "
-            DELETE FROM shared_file WHERE file_hash = ? AND ref_count = 1";
-        let deleted = self
-            .conn
-            .execute(sql, rusqlite::params![user_id, file_info.file_dir, file_info.file_name])?
-            > 0;
+        let params = rusqlite::params![user_id, file_info.file_dir, file_info.file_name];
+        let deleted = self.conn.execute(sql, params)? > 0;
         debug!("deleting record:{file_info:?}, deleted:{deleted}");
         Ok(deleted)
     }
